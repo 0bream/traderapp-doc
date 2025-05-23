@@ -59,7 +59,7 @@ return - `35`
 Для просмотра параметров стратегии используется команда `strategy get ` с параметром `NN`
 `s get <NN>`
 
-> [!Example] 
+> [!example] 
 > `s get 34`
 
 Для установки и изменения параметров стратегии используется команда `strategy set`:
@@ -140,6 +140,8 @@ return - `35`
 - `slowMoving`
 - `useHA`
 - `useActionMA`
+- `useSlowMA`
+- `useMACD`
 - `rsiBuyLevel`
 -  `rsiSellLevel`
 Закрытие позиции определяется либо пунктами цены либо индикатором **ATR**.
@@ -158,6 +160,8 @@ return - `35`
     slowMoving: 800,
 
     useActionMA: false,
+    useSlowMA: false,
+    useMACD: false,
     useHA: false,
     rsiBuyLevel: 68,
     rsiSellLevel: 32,
@@ -232,7 +236,10 @@ RSI 13
       // price crossed up trend MA(10)
       (useActionMA
         ? prev.src < prev.actionMA && curr.src > curr.actionMA
-        : true)
+        : true) &&
+      (useSlowMA ? curr.src > curr.slowMA : true) &&
+      (useMACD ? currMACD.diffs >= 0 : true)
+
 
 ```
 
