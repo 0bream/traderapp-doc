@@ -27,9 +27,9 @@
 	- `trader_id` - идентификатор трэйдера для копирования
 - `candle` - стратегия работающая на закрытиях свечей
 	- `name` - имя стратерии
-	- `strategy_family` - `tms` | `ass` | `bbrsi`
+	- `strategy_family` - `tms` | `ass` | `bbrsi` | `lrs`
 	- `ticker` - `btc`, `eth`, ...
-	- `interval` - `15m`, `1h`
+	- `interval` - `15m | 1h`
 
 возвращает `NN` - unique number of created strategy or `fail`
 
@@ -71,13 +71,23 @@ return - `35`
 
 ##### Параметры общие для всех стратегий
 
-- `a` - amount in USDT
+###### Параметры для расчета фиксированной суммы входа в позицию
+
+- `a` - amount in *USDT*
 - `l` - leverage
 
 > [!example] 
 >  
   >`s set 34 a:1000 l:25`
    >`set 35 l:25`
+
+###### Параметры для расчета суммы входа в позицию при фиксированном Stop Loss
+
+- `useFixedStop` = `true | false`
+- `stopAmount` - размер стопа в *USDT*
+
+При выставлении параметра `useFixedStop:true` так же необходимо указать размер стопа в парметре `stopAmount` в *USDT*.
+Сумма открытия позиции будет динамически расчитываться в с учётом выбранного типа закрытия(`ATR | Points`) так, чтобы убыток был равен `stopAmount`.
 
 ###### Параметры для расчета цен закрытия позиций
 > [!warning] 
@@ -98,6 +108,15 @@ return - `35`
 >  Здесь *пункты* это минимальный шаг цены для конкретного инструмента. Параметры `tpPoint` и `slPoint` нужно подбирать для каждого инструмента индивидуально, т.к. минимальный шаг может отличаться на несколько порядков.
 
 
+##### Поддержка общих параметров для стратегий
+
+| Param \ Strategy           | TMS | BBRSI | ASS | LRS |
+| -------------------------- | --- | ----- | --- | --- |
+| `usePoint`                 |     | +     | +   | +   |
+| `useATR`                   |     | +     | +   | +   |
+| `useFixedStop`             |     |       | +   |     |
+| `closePositionWhenOcoFail` |     |       |     |     |
+|                            |     |       |     |     |
 ##### Параметры `candle` стратегий
 
 ###### Семейство `tms`
@@ -119,13 +138,13 @@ return - `35`
     depthSlowMA: 9,
     bandLength: 34,
     stdDev: 1.6185,
-    maType: 'EMA'
-    priceType: 'close'
+    maType: 'EMA',
+    priceType: 'close',
     periodK: 8,
     smoothK: 1,
     smoothD: 3,
-    maTypeStochastic: 'SMA'
-    priceTypeStochastic: 'close'
+    maTypeStochastic: 'SMA',
+    priceTypeStochastic: 'close',
 }
 ```
 
@@ -181,6 +200,16 @@ BB 30 2
 RSI 13
 
 
+###### Семейство `lrs`
+
+- `slopeThreshold` - абсолютная величина наклона канала. Значение считается как 1/10 от значения используемеого на TradingView, т.е. `0.01(TV) = 0.001`.  (`def = 0` т.е. при любом наклоне),
+- `useSoftEnter`: (`def = true`) - тип входа:
+	- `true` - первым условием вход считается пересечение линией тренда(бычьей или медвежей) **Andean Oscillator** сигнальной линии; далее проверяется была ли смена линии регрессии индикатора **LogRegression Channel** на глубину `softness`
+	- `false` - первым условием считается смена линии регрессии индикатора **LogRegression Channel**, второе условие - соответствующая линия тренда **Andean Oscillator** выше сигнальной линии.
+- `softness`: (`def = 5`),
+
+
+
 ### Позиции
 
 (P)osition - сущность пренадлежазая стратегии. Идентификатором позиции является её уникальный идентификатор `id`. Позиция может находится в трёх состояниях: `open`, `closed`, `fail`.
@@ -193,6 +222,7 @@ RSI 13
 - `p sd <NN> [<count>]` - то же что и предыдущая команда, но с выводом подробной информации;
 - `p c <id>` - принудительное закрытие позиции `id`;
 - `p f <id>` - перевод позиции `id` в статус `fail`.
+- `p repair <id>` - попытка восстановить данные позиции `id`. 
 
 
 ### Маркет специфичаские команды
@@ -265,4 +295,11 @@ RSI 13
       curr.candle.close < curr.bb.lineDown &&
       curr.rsi.value < rsiBuyLevel &&
 ```
+
+
+#### Loagarithmic Regression Strategy (LRS)
+
+- https://www.youtube.com/watch?v=EO9inz3PG9M
+
+
 
