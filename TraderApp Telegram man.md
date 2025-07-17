@@ -297,7 +297,7 @@ RSI 13
 ```
 
 
-#### Loagarithmic Regression Strategy (LRS)
+#### Logarithmic Regression Strategy (LRS)
 
 - https://www.youtube.com/watch?v=EO9inz3PG9M
 
